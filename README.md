@@ -1,4 +1,4 @@
-# BDB
+# BDIB
 KVM LVM (Block Device) Incremental Backup
 
 * This script is designed to do Live LVM Snapshot backups of KVM virtual servers
