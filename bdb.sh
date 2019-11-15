@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Determine OS platform
+python -mplatform | grep -qi 'ubuntu\|debian' && OS="apt" || OS="rpm";
+
+# Check if we were able to determine what the OS type is
+[ ${OS} == "" ] && { echo -e "\nCannot determine your OS type...exiting"; exit 1; };
+
 #########################################
 # Live KVM LVM Incremental Backups      #
 # Github: https://github.com/sayajin101 #
@@ -18,9 +24,6 @@ set -x  # enable debug
 set -e	# stops execution if a variable is not set
 set -u	# stop execution if something goes wrong
 
-# Check if a RPM based system
-[ $(which rpm > /dev/null 2>&1; echo ${?}) -ne 0 ] && { echo -e "\nThis script is designed for a RPM based system...exiting"; exit 1; };
-
 # Force changed blocks to disk, update the super block
 sync;
 
@@ -29,11 +32,16 @@ echo 3 | tee /proc/sys/vm/drop_caches;
 
 
 # Check for requierd applications needed to run this script
+if [ ${OS} == "apt" ]; then
+    [ $(dpkg -l libdigest-perl-md5-perl > /dev/null 2>&1; echo ${?}) -ne 0 ] && { echo -e "\nperl-Digest-MD5 is required...exiting"; exit 1; };
+elif [ ${OS} == "rpm" ]; then
+    [ $(rpm -qa | grep perl-Digest-MD5 > /dev/null 2>&1; echo ${?}) -ne 0 ] && { echo -e "\nperl-Digest-MD5 is required...exiting"; exit 1; };
+fi;
+
 [ $(which lvcreate > /dev/null 2>&1; echo ${?}) -ne 0 ] && { echo -e "\nlvcreate is required...exiting"; exit 1; };
 lvc=$(which lvcreate);
 [ $(which lvremove > /dev/null 2>&1; echo ${?}) -ne 0 ] && { echo -e "\nlvremove is required...exiting"; exit 1; };
 lvr=$(which lvremove);
-[ $(rpm -qa | grep perl-Digest-MD5 > /dev/null 2>&1; echo ${?}) -ne 0 ] && { echo -e "\nperl-Digest-MD5 is required...exiting"; exit 1; };
 [ $(which lzop > /dev/null 2>&1; echo ${?}) -ne 0 ] && { echo -e "\nlzop is required...exiting"; exit 1; };
 
 scriptPath=$(dirname "${BASH_SOURCE[0]}");
